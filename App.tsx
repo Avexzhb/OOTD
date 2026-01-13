@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Shirt, RefreshCw, AlertCircle, MapPin, Camera } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { Shirt, RefreshCw, AlertCircle, MapPin, Camera, Key, ExternalLink } from 'lucide-react';
 import Input from './components/Input';
 import GenderPicker from './components/GenderPicker';
 import { Gender, UserInput, GenerationState } from './types';
 import { generatePersonaImage } from './services/geminiService';
 
 const App: React.FC = () => {
+  const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [userInput, setUserInput] = useState<UserInput>({
     city: '',
     age: 1,
@@ -17,6 +19,21 @@ const App: React.FC = () => {
     isLoading: false,
     error: null,
   });
+
+  useEffect(() => {
+    const checkKey = async () => {
+      // The environment provides window.aistudio globally as AIStudio, so we use it directly
+      const selected = await window.aistudio.hasSelectedApiKey();
+      setHasKey(selected);
+    };
+    checkKey();
+  }, []);
+
+  const handleOpenKeySelector = async () => {
+    await window.aistudio.openSelectKey();
+    // Proceed immediately after triggering the dialog to avoid race conditions
+    setHasKey(true);
+  };
 
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(prev => ({ ...prev, city: e.target.value }));
@@ -52,12 +69,47 @@ const App: React.FC = () => {
         isLoading: false,
         error: err.message || "Failed to curate your look. Try again.",
       });
+      // If requested entity not found, it might be a key issue.
+      // We check for "not found" which is the expected signal from the API or geminiService.
+      if (err.message?.toLowerCase().includes("not found")) {
+        setHasKey(false);
+      }
     }
   };
 
   const reset = () => {
     setGeneration({ imageUrl: null, isLoading: false, error: null });
   };
+
+  if (hasKey === false) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-slate-50">
+        <div className="max-w-md w-full glass-card rounded-[2.5rem] p-10 text-center space-y-8 shadow-2xl border border-white">
+          <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
+            <Key className="w-10 h-10 text-rose-500" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="fashion-title text-3xl font-bold text-slate-900">High-Quality AI Fashion</h2>
+            <p className="text-slate-500">To use <b>Gemini 3 Pro Image</b>, you must connect your own API key from a paid project.</p>
+          </div>
+          <button
+            onClick={handleOpenKeySelector}
+            className="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-[1.5rem] shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            Connect API Key
+          </button>
+          <a 
+            href="https://ai.google.dev/gemini-api/docs/billing" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors"
+          >
+            Learn about billing <ExternalLink size={14} />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-10 md:py-16">
@@ -123,7 +175,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="text-center">
-                <p className="fashion-title text-2xl font-bold text-slate-800">Curating Style...</p>
+                <p className="fashion-title text-2xl font-bold text-slate-800">Curating Pro Look...</p>
                 <p className="text-sm text-slate-500 tracking-wide mt-2">Designing the perfect look for {userInput.city}</p>
               </div>
             </div>
@@ -154,7 +206,7 @@ const App: React.FC = () => {
                   Try New Style
                 </button>
                 <p className="text-[10px] text-center text-slate-400 uppercase tracking-[0.2em] font-medium italic">
-                  AI Fashion Studio • Powered by Gemini
+                  AI Fashion Studio • Pro Image Engine
                 </p>
               </div>
             </div>
@@ -162,8 +214,14 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className="mt-12 text-center text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">
+      <footer className="mt-12 text-center text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] space-y-2">
         <p>Fashion Beyond Boundaries &copy; 2025</p>
+        <button 
+          onClick={() => window.aistudio.openSelectKey().then(() => setHasKey(true))}
+          className="hover:text-rose-500 transition-colors"
+        >
+          Manage API Key
+        </button>
       </footer>
     </div>
   );
