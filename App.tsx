@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Shirt, Loader2, RefreshCw, AlertCircle, MapPin, Camera } from 'lucide-react';
+import { Shirt, RefreshCw, AlertCircle, MapPin, Camera } from 'lucide-react';
 import Input from './components/Input';
 import GenderPicker from './components/GenderPicker';
 import { Gender, UserInput, GenerationState } from './types';
