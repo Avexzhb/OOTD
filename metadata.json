@@ -1,5 +1,5 @@
 {
-  "name": "OOTD Studio",
-  "description": "Premium AI fashion visual generator.",
+  "name": "Outfit of The Day",
+  "description": "Generate a unique, high-fashion outfit visual based on your age, location, and gender using Gemini's advanced image generation.",
   "requestFramePermissions": []
 }
