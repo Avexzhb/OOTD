@@ -20,7 +20,7 @@ export interface GenerationState {
   error: string | null;
 }
 
-// --- Sub-components ---
+// --- Components ---
 const Input: React.FC<{
   label: string;
   type: 'text' | 'number';
@@ -29,15 +29,15 @@ const Input: React.FC<{
   placeholder?: string;
   min?: number;
 }> = ({ label, type, value, onChange, placeholder, min }) => (
-  <div className="flex flex-col space-y-1.5 w-full">
-    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{label}</label>
+  <div className="flex flex-col space-y-1 w-full">
+    <label className="text-sm font-semibold text-gray-700">{label}</label>
     <input
       type={type}
       value={value}
       onChange={onChange}
       min={min}
       placeholder={placeholder}
-      className="px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all duration-200 bg-white/50 backdrop-blur-sm text-slate-900 shadow-sm"
+      className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all duration-200 bg-white text-black"
     />
   </div>
 );
@@ -46,9 +46,9 @@ const GenderPicker: React.FC<{
   selected: Gender | null;
   onSelect: (gender: Gender) => void;
 }> = ({ selected, onSelect }) => (
-  <div className="flex flex-col space-y-1.5 w-full">
-    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Gender Identity</label>
-    <div className="grid grid-cols-2 gap-3">
+  <div className="flex flex-col space-y-1 w-full">
+    <label className="text-sm font-semibold text-gray-700">Gender</label>
+    <div className="grid grid-cols-2 gap-4">
       {[
         { id: Gender.MALE, label: 'Male', icon: User },
         { id: Gender.FEMALE, label: 'Female', icon: UserCircle },
@@ -56,14 +56,14 @@ const GenderPicker: React.FC<{
         <button
           key={id}
           onClick={() => onSelect(id)}
-          className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 ${
+          className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${
             selected === id
-              ? 'border-rose-500 bg-rose-50 text-rose-600 shadow-inner scale-[0.98]'
-              : 'border-slate-100 bg-white text-slate-400 hover:border-rose-200 hover:bg-rose-50/30'
+              ? 'border-rose-500 bg-rose-50 text-rose-600'
+              : 'border-gray-100 bg-white text-gray-400 hover:border-rose-200'
           }`}
         >
-          <Icon size={28} />
-          <span className="mt-2 text-xs font-bold uppercase tracking-widest">{label}</span>
+          <Icon size={32} />
+          <span className="mt-2 font-medium">{label}</span>
         </button>
       ))}
     </div>
@@ -79,12 +79,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkKey = async () => {
       if (window.aistudio) {
-        try {
-          const selected = await window.aistudio.hasSelectedApiKey();
-          setHasKey(selected);
-        } catch (e) {
-          console.error("Failed to check API key status", e);
-        }
+        const selected = await window.aistudio.hasSelectedApiKey();
+        setHasKey(selected);
       }
     };
     checkKey();
@@ -99,7 +95,7 @@ const App: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!userInput.city || !userInput.gender) {
-      setGeneration(prev => ({ ...prev, error: "Please fill in all fields to proceed." }));
+      setGeneration(prev => ({ ...prev, error: "Please provide your city and gender." }));
       return;
     }
 
@@ -109,139 +105,116 @@ const App: React.FC = () => {
       const imageUrl = await generatePersonaImage(userInput.city, userInput.age, userInput.gender);
       setGeneration({ imageUrl, isLoading: false, error: null });
     } catch (err: any) {
-      const errMsg = err.message || "Something went wrong. Please try again.";
+      const errMsg = err.message || "Failed to generate your look.";
       setGeneration({ imageUrl: null, isLoading: false, error: errMsg });
-      // If the error suggests key issues, prompt for key selection
-      if (errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("api key")) {
-        setHasKey(false);
-      }
+      if (errMsg.toLowerCase().includes("not found")) setHasKey(false);
     }
   };
 
   if (hasKey === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-[#f8f9fa]">
-        <div className="max-w-md w-full glass-card rounded-[3rem] p-12 text-center space-y-10 shadow-2xl border border-white">
-          <div className="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-rose-50/50">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="max-w-md w-full glass-card rounded-[2.5rem] p-10 text-center space-y-8 shadow-2xl border border-white">
+          <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
             <Key className="w-10 h-10 text-rose-500" />
           </div>
-          <div className="space-y-3">
-            <h2 className="fashion-title text-3xl font-black text-slate-900 leading-tight">Secure Access Required</h2>
-            <p className="text-slate-500 text-sm leading-relaxed px-4">To generate high-fidelity style visuals, please link your paid Gemini API key.</p>
+          <div className="space-y-2">
+            <h2 className="fashion-title text-3xl font-bold text-slate-900">Premium AI Fashion</h2>
+            <p className="text-slate-500 text-sm">To access high-quality fashion visuals, please connect your API key from a paid project.</p>
           </div>
-          <div className="space-y-4">
-            <button
-              onClick={handleOpenKeySelector}
-              className="w-full bg-slate-900 hover:bg-black text-white font-black py-6 rounded-[2rem] shadow-xl transition-all duration-300 transform active:scale-[0.98] tracking-widest text-xs uppercase"
-            >
-              Link API Key
-            </button>
-            <a 
-              href="https://ai.google.dev/gemini-api/docs/billing" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 hover:text-rose-600 transition-colors"
-            >
-              Billing Guide <ExternalLink size={12} />
-            </a>
-          </div>
+          <button
+            onClick={handleOpenKeySelector}
+            className="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-[1.5rem] shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            Connect API Key
+          </button>
+          <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-medium text-rose-500 hover:underline">
+            Billing Documentation <ExternalLink size={12} />
+          </a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-12 md:py-20">
-      <header className="max-w-md w-full text-center mb-12 space-y-2">
-        <h1 className="fashion-title text-4xl font-black text-slate-900 flex items-center justify-center gap-3 uppercase tracking-tighter">
-          <Shirt className="w-10 h-10 text-rose-500" />
-          OOTD Studio
+    <div className="min-h-screen flex flex-col items-center px-4 py-10 md:py-16">
+      <header className="max-w-md w-full text-center mb-10 space-y-1">
+        <h1 className="fashion-title text-3xl md:text-4xl font-black text-slate-900 flex items-center justify-center gap-2 uppercase tracking-tighter">
+          <Shirt className="w-8 h-8 text-rose-500" />
+          OOTD Generator
         </h1>
-        <p className="artistic-tagline text-rose-500 text-3xl">Curated by AI</p>
+        <p className="artistic-tagline text-rose-500 text-2xl">Your daily style companion</p>
       </header>
 
-      <main className="max-w-md w-full glass-card rounded-[3rem] shadow-2xl overflow-hidden border border-white/40">
-        <div className="p-10 md:p-12 space-y-10">
+      <main className="max-w-md w-full glass-card rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/40">
+        <div className="p-8 md:p-10 space-y-8">
           {!generation.imageUrl && !generation.isLoading ? (
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <Input
-                  label="Location"
-                  type="text"
-                  value={userInput.city}
-                  onChange={e => setUserInput({ ...userInput, city: e.target.value })}
-                  placeholder="Paris, Tokyo, Milan..."
-                />
-                <Input
-                  label="Age"
-                  type="number"
-                  min={1}
-                  value={userInput.age}
-                  onChange={e => setUserInput({ ...userInput, age: parseInt(e.target.value) || 1 })}
-                />
-                <GenderPicker
-                  selected={userInput.gender}
-                  onSelect={gender => setUserInput({ ...userInput, gender })}
-                />
-              </div>
-
+            <div className="space-y-6">
+              <Input
+                label="City"
+                type="text"
+                value={userInput.city}
+                onChange={e => setUserInput({ ...userInput, city: e.target.value })}
+                placeholder="e.g. Tokyo, London, NYC"
+              />
+              <Input
+                label="Age"
+                type="number"
+                min={1}
+                value={userInput.age}
+                onChange={e => setUserInput({ ...userInput, age: parseInt(e.target.value) || 1 })}
+              />
+              <GenderPicker
+                selected={userInput.gender}
+                onSelect={gender => setUserInput({ ...userInput, gender })}
+              />
               {generation.error && (
-                <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 p-5 rounded-2xl border border-rose-100">
-                  <AlertCircle size={16} className="shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-rose-600 bg-rose-50 p-3 rounded-xl border border-rose-100">
+                  <AlertCircle size={14} />
                   <span>{generation.error}</span>
                 </div>
               )}
-
               <button
                 onClick={handleGenerate}
                 disabled={!userInput.city || !userInput.gender}
-                className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-200 disabled:text-slate-400 text-white font-black py-6 rounded-[2rem] shadow-xl transition-all duration-300 flex items-center justify-center gap-4 tracking-widest text-xs uppercase transform active:scale-[0.98]"
+                className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-300 text-white font-bold py-5 rounded-[1.5rem] shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
               >
                 <Camera size={20} />
-                Generate Lookbook
+                Generate Look
               </button>
             </div>
           ) : generation.isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-10">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full border-4 border-slate-100 border-t-rose-500 animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <Shirt className="w-8 h-8 text-slate-300 animate-pulse" />
-                </div>
-              </div>
-              <div className="text-center space-y-3">
-                <p className="fashion-title text-2xl font-black text-slate-900 tracking-wide">Designing Style...</p>
-                <p className="text-[10px] text-slate-400 uppercase tracking-[0.4em] font-black">Gemini 3 Pro Engine</p>
+            <div className="flex flex-col items-center justify-center py-16 space-y-8">
+              <div className="w-20 h-20 rounded-full border-4 border-slate-100 border-t-rose-500 animate-spin" />
+              <div className="text-center">
+                <p className="fashion-title text-xl font-bold text-slate-800 tracking-wide">Designing Your Style...</p>
+                <p className="text-xs text-slate-500 mt-2 uppercase tracking-widest">Powered by Gemini 3 Pro</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-10 animate-in fade-in zoom-in-95 duration-1000">
-              <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl bg-slate-100 ring-1 ring-black/5">
-                <img src={generation.imageUrl!} alt="Fashion Generation" className="w-full aspect-[3/4] object-cover" />
-                <div className="absolute bottom-6 left-6 px-4 py-2 bg-white/90 backdrop-blur-md rounded-2xl flex items-center gap-2 text-slate-900 shadow-xl">
-                  <MapPin size={12} className="text-rose-500" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{userInput.city}</span>
+            <div className="space-y-8 animate-in fade-in duration-700">
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl bg-slate-200">
+                <img src={generation.imageUrl!} alt="OOTD" className="w-full aspect-[3/4] object-cover" />
+                <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full flex items-center gap-2 text-white border border-white/10">
+                  <MapPin size={10} className="text-rose-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{userInput.city}</span>
                 </div>
               </div>
-              <button 
-                onClick={() => setGeneration({ imageUrl: null, isLoading: false, error: null })} 
-                className="w-full bg-slate-900 hover:bg-black text-white font-black py-6 rounded-[2rem] shadow-xl flex items-center justify-center gap-4 tracking-widest text-xs uppercase transition-all duration-300"
-              >
-                <RefreshCw size={18} />
-                New Inspiration
-              </button>
+              <div className="flex flex-col gap-4">
+                <button onClick={() => setGeneration({ imageUrl: null, isLoading: false, error: null })} className="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-[1.5rem] shadow-xl flex items-center justify-center gap-3">
+                  <RefreshCw className="w-5 h-5" />
+                  New Style
+                </button>
+              </div>
             </div>
           )}
         </div>
       </main>
 
-      <footer className="mt-16 text-center space-y-4">
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em]">&copy; 2025 OOTD STUDIO</p>
-        <button 
-          onClick={() => window.aistudio.openSelectKey().then(() => setHasKey(true))} 
-          className="text-slate-300 hover:text-rose-500 text-[9px] font-black uppercase tracking-[0.3em] transition-colors"
-        >
-          Key Settings
+      <footer className="mt-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em] space-y-4">
+        <p>&copy; 2025 AI Fashion Studio</p>
+        <button onClick={() => window.aistudio.openSelectKey().then(() => setHasKey(true))} className="hover:text-rose-500 underline transition-colors">
+          Settings
         </button>
       </footer>
     </div>
